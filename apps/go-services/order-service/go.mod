@@ -1,3 +1,3 @@
-module github.com/RedHat007-rgb/hft-phase-3/apps/go-services/order-service
+module github.com/RedHat007-rgb/hft-phase-3/apps/go-services/order-services
 
 go 1.25.0

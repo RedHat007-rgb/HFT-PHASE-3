@@ -1,9 +1,0 @@
-go 1.25.0
-
-use (
-	./apps/go-services/market-service
-	./apps/go-services/order-service
-	./apps/go-services/ticker-service
-	./apps/go-services/trade-service
-	./packages/golib
-)

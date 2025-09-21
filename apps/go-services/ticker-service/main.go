@@ -1,42 +1,82 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net"
 
-	tickerpb "github.com/RedHat007-rgb/hft-phase-3/packages/golib/proto/ticker"
+	pb "github.com/RedHat007-rgb/hft-phase-3/apps/go-services/ticker-service/proto/ticker"
+	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"
 )
-type server struct {
-tickerpb.UnimplementedTickerServiceServer
+
+type TickerServer struct{
+	pb.UnimplementedTickerServiceServer
 }
-func (s *server) StreamTicker(req *tickerpb.TickerRequest, stream tickerpb.TickerService_StreamTickerServer) error {
-// TODO: Implement your streaming logic here.
-// For example, loop to send updates:
-for {
-update := &tickerpb.TickerUpdate{
-Exchange: "example",
-Symbol:   req.Symbol,
-Price:    "100.00",
-Volume:   "1000",
-EventTime: 1234567890,
+
+
+type BinanceTicker struct{
+	
+	Symbol string `json:"s"`
+	
+	Volume string `json:"v"`
+	High string `json:"h"`
 }
-if err := stream.Send(update); err != nil {
-return err
+
+func (s *TickerServer) StreamTicker(req *pb.TickerRequest,stream pb.TickerService_StreamTickerServer) error{
+	url:="wss://stream.binance.com:9443/ws/"+req.Symbol+"@ticker"
+	conn,_,err:=websocket.DefaultDialer.Dial(url,nil)
+
+	if err!=nil{
+		return err
+	}
+
+	defer conn.Close()
+
+
+	log.Println("subscribed to ",req.Symbol)
+
+	for{
+		_,msg,err:=conn.ReadMessage()
+		if err!=nil{
+			log.Println("read error",err)
+		}
+
+		var t BinanceTicker
+
+
+		if err:=json.Unmarshal(msg,&t);err!=nil{
+			// log.Println(json.Unmarshal(msg,&t))
+			log.Println("unmarshall error",err)
+		}
+		
+		update:=&pb.TickerUpdate{
+			Symbol: t.Symbol,
+			
+			Volume: t.Volume,
+			
+			High:t.High,
+			
+		}
+
+		log.Println(update)
+		if err:=stream.Send(update);err!=nil{
+			return err
+		}
+	}
+
 }
-// Add delay or real data fetching logic.
-}
-return nil
-}
+
+
 func main() {
-lis, err := net.Listen("tcp", ":50051") // Change port as needed.
-if err != nil {
-log.Fatalf("failed to listen: %v", err)
-}
-s := grpc.NewServer()
-tickerpb.RegisterTickerServiceServer(s, &server{})
-log.Printf("gRPC server listening on :50051")
-if err := s.Serve(lis); err != nil {
-log.Fatalf("failed to serve: %v", err)
-}
+	lis, err := net.Listen("tcp", ":50052")
+	if err != nil {
+		log.Fatalf("❌ failed to listen: %v", err)
+	}
+	grpcServer := grpc.NewServer()
+	pb.RegisterTickerServiceServer(grpcServer, &TickerServer{})
+	log.Println("🚀 Go Ticker Service running on :50052")
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("❌ failed to serve: %v", err)
+	}
 }
