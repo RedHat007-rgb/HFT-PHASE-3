@@ -1,0 +1,7 @@
+{
+  "name": "trade-service",
+  "scripts": {
+    "dev": "go run .",
+    "build": "go build -o ../bin/trade-service main.go"
+  }
+}

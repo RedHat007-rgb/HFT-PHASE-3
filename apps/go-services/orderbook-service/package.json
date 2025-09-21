@@ -1,0 +1,7 @@
+{
+  "name": "orderbook-service",
+  "scripts": {
+    "dev": "go run .",
+    "build": "go build -o ../bin/orderbook-service main.go"
+  }
+}
