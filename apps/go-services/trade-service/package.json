@@ -1,7 +1,8 @@
 {
   "name": "trade-service",
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "dev": "go run .",
-    "build": "go build -o ../bin/trade-service main.go"
+    "dev": "go run main.go"
   }
 }
